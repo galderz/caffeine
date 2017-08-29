@@ -56,9 +56,10 @@ subprojects {
 
   if (JavaVersion.current().isJava9Compatible()) {
     tasks.uploadArchives.enabled = false
-  } else {
-    apply plugin: 'net.ltgt.errorprone'
   }
+//  else {
+//    apply plugin: 'net.ltgt.errorprone'
+//  }
 
   sourceCompatibility = JavaVersion.VERSION_1_8
 
@@ -66,14 +67,14 @@ subprojects {
   version.with {
     major = 2 // incompatible API changes
     minor = 4 // backwards-compatible additions
-    patch = 0 // backwards-compatible bug fixes
+    patch = 1 // backwards-compatible bug fixes
     releaseBuild = rootProject.hasProperty('release')
   }
   archivesBaseName = path[1..-1].replaceAll(':', '-').toLowerCase()
 
   dependencies {
     provided libraries.jsr305
-    provided libraries.error_prone_annotations
+//    provided libraries.error_prone_annotations
 
     testCompile libraries.guava
     testCompile test_libraries.mockito

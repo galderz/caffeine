@@ -1441,6 +1441,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
       return null;
     }
     afterRead(node, now, recordStats);
+    logger.log(Level.FINE, String.format("Return %s", node));
     return node.getValue();
   }
 
@@ -2646,7 +2647,11 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
           next = iterator.next();
           value = next.getValue();
           key = next.getKey();
-          if (cache.hasExpired(next, now) || (key == null) || (value == null) || !next.isAlive()) {
+          boolean hasExpired = cache.hasExpired(next, now);
+          if (hasExpired || (key == null) || (value == null) || !next.isAlive()) {
+            logger.log(Level.FINE, String.format(
+                "Value present but not returning (hasExpired=%b, nextIsAlive=%b", hasExpired, next.isAlive()
+            ));
             value = null;
             next = null;
             key = null;
@@ -2654,6 +2659,7 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
           }
           return true;
         }
+        logger.log(Level.FINE, "No next available");
         return false;
       }
     }
