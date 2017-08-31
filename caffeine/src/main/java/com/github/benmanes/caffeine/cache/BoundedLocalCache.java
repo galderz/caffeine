@@ -763,7 +763,10 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
         makeDead(n);
       }
       removed[0] = true;
-      return null;
+       logger.log(Level.FINE, String.format(
+          "Evicted key=%s value=%s", key, value[0]
+       ));
+       return null;
     });
 
     // The entry is no longer eligible for eviction
@@ -1393,6 +1396,12 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
       }
     });
 
+    if (cause[0] != null) {
+        logger.log(Level.FINE, String.format(
+           "Removed via removeNode(node=%s, now=%d), cause %s", node, now, cause[0]
+        ));
+    }
+
     if ((cause[0] != null) && hasRemovalListener()) {
       notifyRemoval(key, value[0], cause[0]);
     }
@@ -1516,6 +1525,10 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
     requireNonNull(key);
     requireNonNull(value);
 
+     logger.log(Level.FINE, String.format(
+        "Put key=%s, value=%s", key, value
+     ));
+
     Node<K, V> node = null;
     long now = expirationTicker().read();
     int newWeight = weigher.weigh(key, value);
@@ -1637,6 +1650,10 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
       cause = RemovalCause.EXPLICIT;
     }
 
+    logger.log(Level.FINE, String.format(
+        "Removed via removeNoWriter(key=%s), cause %s", key, cause
+    ));
+
     if (hasRemovalListener()) {
       @SuppressWarnings("unchecked")
       K castKey = (K) key;
@@ -1684,6 +1701,10 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
       if (hasRemovalListener()) {
         notifyRemoval(castKey, oldValue[0], cause[0]);
       }
+
+      logger.log(Level.FINE, String.format(
+       "Removed via removeWithWriter(key=%s), cause %s", key, cause[0]
+      ));
     }
     return (cause[0] == RemovalCause.EXPLICIT) ? oldValue[0] : null;
   }
@@ -1725,6 +1746,12 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
         return null;
       }
     });
+
+     if (cause[0] != null) {
+        logger.log(Level.FINE, String.format(
+           "Removed via remove(key=%s, value=%s), cause %s", key, value, cause[0]
+        ));
+     }
 
     if (removed[0] == null) {
       return false;
@@ -2033,6 +2060,10 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
     @SuppressWarnings({"unchecked", "rawtypes"})
     Node<K, V>[] removed = new Node[1];
 
+     logger.log(Level.FINE, String.format(
+        "Remap key=%s", key
+     ));
+
     int[] weight = new int[2]; // old, new
     RemovalCause[] cause = new RemovalCause[1];
 
@@ -2092,6 +2123,11 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
     });
 
     if (cause[0] != null) {
+
+       logger.log(Level.FINE, String.format(
+          "Removed via remap, cause %s", cause[0]
+       ));
+
       if (cause[0].wasEvicted()) {
         statsCounter().recordEviction(weight[0]);
       }
@@ -2632,7 +2668,11 @@ abstract class BoundedLocalCache<K, V> extends BLCHeader.DrainStatusRef<K, V>
     Node<K, V> next;
 
     EntryIterator(BoundedLocalCache<K, V> cache) {
-      this.iterator = cache.data.values().iterator();
+      Collection<Node<K, V>> values = cache.data.values();
+      this.iterator = values.iterator();
+      logger.log(Level.FINE, String.format(
+        "Create iterator for values: %s", values
+      ));
       this.now = cache.expirationTicker().read();
       this.cache = cache;
     }
